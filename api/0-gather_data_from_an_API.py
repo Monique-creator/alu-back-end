@@ -1,29 +1,22 @@
 #!/usr/bin/python3
-"""Module that fetches and displays employee TODO list progress."""
+"""Fetches and displays employee TODO list progress from REST API."""
 
 import requests
 import sys
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        exit()
+    employee_id = sys.argv[1]
+    url = "https://jsonplaceholder.typicode.com"
 
-    employee_id = int(sys.argv[1])
-    base_url = "https://jsonplaceholder.typicode.com"
+    user = requests.get("{}/users/{}".format(url, employee_id)).json()
+    todos = requests.get("{}/todos".format(url),
+                         params={"userId": employee_id}).json()
 
-    user_response = requests.get("{}/users/{}".format(
-        base_url, employee_id))
-    employee_name = user_response.json().get("name")
-
-    todos_response = requests.get("{}/todos?userId={}".format(
-        base_url, employee_id))
-    todos = todos_response.json()
-
-    completed = [task for task in todos if task.get("completed") is True]
-
+    completed = [t for t in todos if t.get("completed")]
+    
     print("Employee {} is done with tasks({}/{}):".format(
-        employee_name, len(completed), len(todos)))
-
+        user.get("name"), len(completed), len(todos)))
+    
     for task in completed:
         print("\t {}".format(task.get("title")))

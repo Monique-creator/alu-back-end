@@ -1,22 +1,36 @@
 #!/usr/bin/python3
-"""Fetches and displays employee TODO list progress from REST API."""
+"""Script that returns information about a user's TODO list progress"""
 
 import requests
 import sys
 
 
-if __name__ == "__main__":
-    employee_id = sys.argv[1]
-    url = "https://jsonplaceholder.typicode.com"
+def main():
+    """main function"""
+    user_id = int(sys.argv[1])
+    todo_url = 'https://jsonplaceholder.typicode.com/todos'
+    user_url = 'https://jsonplaceholder.typicode.com/users/{}'.format(user_id)
 
-    user = requests.get("{}/users/{}".format(url, employee_id)).json()
-    todos = requests.get("{}/todos".format(url),
-                         params={"userId": employee_id}).json()
+    response = requests.get(todo_url)
 
-    completed = [t for t in todos if t.get("completed")]
-    
-    print("Employee {} is done with tasks({}/{}):".format(
-        user.get("name"), len(completed), len(todos)))
-    
-    for task in completed:
-        print("\t {}".format(task.get("title")))
+    total_questions = 0
+    completed = []
+    for todo in response.json():
+
+        if todo['userId'] == user_id:
+            total_questions += 1
+
+            if todo['completed']:
+                completed.append(todo['title'])
+
+    user_name = requests.get(user_url).json()['name']
+
+    printer = ("Employee {} is done with tasks({}/{}):".format(user_name,
+               len(completed), total_questions))
+    print(printer)
+    for q in completed:
+        print("\t {}".format(q))
+
+
+if __name__ == '__main__':
+    main()

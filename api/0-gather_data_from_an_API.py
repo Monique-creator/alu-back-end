@@ -1,31 +1,113 @@
 #!/usr/bin/python3
-"""Module to fetch employee TODO list progress from REST API."""
+
+"""
+
+0-gather_data_from_an_API.py
+
+
+
+Fetches and displays the TODO list progress for a given employee ID from
+
+JSONPlaceholder (https://jsonplaceholder.typicode.com).
+
+
+
+Requirements:
+
+- Uses requests
+
+- Takes an integer employee ID as argument
+
+- Prints in the exact specified format
+
+"""
 
 import requests
+
 import sys
 
 
-if __name__ == "__main__":
+
+
+
+def main():
+
     if len(sys.argv) != 2:
-        exit()
 
-    employee_id = int(sys.argv[1])
-    base_url = "https://jsonplaceholder.typicode.com"
+        print(f"Usage: {sys.argv[0]} EMPLOYEE_ID", file=sys.stderr)
 
-    user_response = requests.get("{}/users/{}".format(
-        base_url, employee_id))
-    employee_name = user_response.json().get("name")
+        sys.exit(1)
 
-    todos_response = requests.get("{}/todos?userId={}".format(
-        base_url, employee_id))
-    todos = todos_response.json()
 
-    completed = [task for task in todos if task.get("completed") is True]
-    total_tasks = len(todos)
-    completed_tasks = len(completed)
 
-    print("Employee {} is done with tasks({}/{}):".format(
-        employee_name, completed_tasks, total_tasks))
+    try:
+
+        employee_id = int(sys.argv[1])
+
+    except ValueError:
+
+        print("EMPLOYEE_ID must be an integer", file=sys.stderr)
+
+        sys.exit(1)
+
+
+
+    base = "https://jsonplaceholder.typicode.com"
+
+
+
+    # Fetch user info
+
+    user_resp = requests.get(f"{base}/users/{employee_id}")
+
+    if user_resp.status_code != 200:
+
+        sys.exit(1)
+
+    user = user_resp.json()
+
+    employee_name = user.get("name")
+
+
+
+    # Fetch todos for the employee
+
+    todos_resp = requests.get(f"{base}/todos", params={"userId": employee_id})
+
+    if todos_resp.status_code != 200:
+
+        sys.exit(1)
+
+    todos = todos_resp.json()
+
+
+
+    completed = [t for t in todos if t.get("completed") is True]
+
+
+
+    header = (
+
+        f"Employee {employee_name} is done with tasks"
+
+        f"({len(completed)}/{len(todos)}):"
+
+    )
+
+    print(header)
+
+
 
     for task in completed:
-        print("\t {}".format(task.get("title")))
+
+        title = task.get("title")
+
+        print("\t {}".format(title))
+
+
+
+
+
+if __name__ == "__main__":
+
+    main()

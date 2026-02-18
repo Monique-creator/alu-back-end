@@ -1,52 +1,37 @@
 #!/usr/bin/python3
-"""
-3-dictionary_of_list_of_dictionaries.py
+"""Script that gets user data (Todo list) from API
+and then export the result to csv file. """
 
-Exports all tasks from all employees to JSON in the exact format:
-{
-  "USER_ID": [
-    {"username": "USERNAME", "task": "TASK_TITLE",
-     "completed": TASK_COMPLETED_STATUS},
-    ...
-  ],
-  "USER_ID": [...]
-}
-File name: todo_all_employees.json
-"""
 import json
 import requests
 
 
 def main():
-    base = "https://jsonplaceholder.typicode.com"
+    """main function"""
+    todo_url = 'https://jsonplaceholder.typicode.com/todos'
 
-    users_resp = requests.get(f"{base}/users")
-    todos_resp = requests.get(f"{base}/todos")
-    if users_resp.status_code != 200 or todos_resp.status_code != 200:
-        raise SystemExit(1)
+    response = requests.get(todo_url)
 
-    users = users_resp.json()
-    todos = todos_resp.json()
+    output = {}
 
-    user_map = {user.get("id"): user.get("username") for user in users}
+    for todo in response.json():
+        user_id = todo.get('userId')
+        if user_id not in output.keys():
+            output[user_id] = []
+            user_url = 'https://jsonplaceholder.typicode.com/users/{}'.format(
+                user_id)
+            user_name = requests.get(user_url).json().get('username')
 
-    result = {}
-    for uid in user_map:
-        result[str(uid)] = []
-
-    for todo in todos:
-        uid = todo.get("userId")
-        result[str(uid)].append(
+        output[user_id].append(
             {
-                "username": user_map.get(uid),
-                "task": todo.get("title"),
-                "completed": todo.get("completed"),
-            }
-        )
+                "username": user_name,
+                "task": todo.get('title'),
+                "completed": todo.get('completed')
+            })
 
-    with open("todo_all_employees.json", "w", encoding="utf-8") as fobj:
-        json.dump(result, fobj)
+    with open("todo_all_employees.json", 'w') as file:
+        json.dump(output, file)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

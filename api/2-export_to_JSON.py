@@ -1,17 +1,9 @@
 #!/usr/bin/python3
 """
-2-export_to_JSON.py
-
-Exports tasks for a given employee ID to JSON in the exact format:
-{
-  "USER_ID": [
-    {"task": "TASK_TITLE", "completed": TASK_COMPLETED_STATUS,
-     "username": "USERNAME"},
-    ...
-  ]
-}
-File name: USER_ID.json
+Fetch and display an employee's TODO list progress
+from https://jsonplaceholder.typicode.com
 """
+
 import json
 import requests
 import sys
@@ -19,42 +11,28 @@ import sys
 
 def main():
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} EMPLOYEE_ID", file=sys.stderr)
         sys.exit(1)
 
-    try:
-        employee_id = int(sys.argv[1])
-    except ValueError:
-        print("EMPLOYEE_ID must be an integer", file=sys.stderr)
-        sys.exit(1)
+    user_id = sys.argv[1]
 
-    base = "https://jsonplaceholder.typicode.com"
+    base_url = "https://jsonplaceholder.typicode.com"
 
-    user_resp = requests.get(f"{base}/users/{employee_id}")
-    if user_resp.status_code != 200:
-        sys.exit(1)
-    user = user_resp.json()
+    user = requests.get(f"{base_url}/users/{user_id}").json()
     username = user.get("username")
 
-    todos_resp = requests.get(f"{base}/todos", params={"userId": employee_id})
-    if todos_resp.status_code != 200:
-        sys.exit(1)
-    todos = todos_resp.json()
+    todos = requests.get(f"{base_url}/users/{user_id}/todos").json()
+    tasks = []
+    for task in todos:
+        tasks.append({
+            "task": task.get("title"),
+            "completed": task.get("completed"),
+            "username": username
+        })
 
-    result = {
-        str(employee_id): [
-            {
-                "task": todo.get("title"),
-                "completed": todo.get("completed"),
-                "username": username,
-            }
-            for todo in todos
-        ]
-    }
+    data = {user_id: tasks}
 
-    filename = f"{employee_id}.json"
-    with open(filename, "w", encoding="utf-8") as fobj:
-        json.dump(result, fobj)
+    with open(f"{user_id}.json", mode="w", encoding="utf-8") as jsonfile:
+        json.dump(data, jsonfile)
 
 
 if __name__ == "__main__":

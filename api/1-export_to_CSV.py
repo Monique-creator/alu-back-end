@@ -1,11 +1,6 @@
 #!/usr/bin/python3
-"""
-1-export_to_CSV.py
+"""Export an employee TODO list to CSV."""
 
-Exports all tasks for a given employee ID to CSV in the exact format:
-"USER_ID","USERNAME","TASK_COMPLETED_STATUS","TASK_TITLE"
-File name: USER_ID.csv
-"""
 import csv
 import requests
 import sys
@@ -13,40 +8,24 @@ import sys
 
 def main():
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} EMPLOYEE_ID", file=sys.stderr)
         sys.exit(1)
 
-    try:
-        employee_id = int(sys.argv[1])
-    except ValueError:
-        print("EMPLOYEE_ID must be an integer", file=sys.stderr)
-        sys.exit(1)
+    user_id = sys.argv[1]
+    base_url = "https://jsonplaceholder.typicode.com"
 
-    base = "https://jsonplaceholder.typicode.com"
-
-    user_resp = requests.get(f"{base}/users/{employee_id}")
-    if user_resp.status_code != 200:
-        sys.exit(1)
-    user = user_resp.json()
+    user = requests.get(f"{base_url}/users/{user_id}").json()
     username = user.get("username")
+    todos = requests.get(f"{base_url}/users/{user_id}/todos").json()
 
-    todos_resp = requests.get(f"{base}/todos", params={"userId": employee_id})
-    if todos_resp.status_code != 200:
-        sys.exit(1)
-    todos = todos_resp.json()
-
-    filename = f"{employee_id}.csv"
-    with open(filename, "w", newline="", encoding="utf-8") as fobj:
-        writer = csv.writer(fobj, quoting=csv.QUOTE_ALL)
-        for todo in todos:
-            writer.writerow(
-                [
-                    employee_id,
-                    username,
-                    todo.get("completed"),
-                    todo.get("title"),
-                ]
-            )
+    with open(f"{user_id}.csv", "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.writer(csv_file, quotechar='"', quoting=csv.QUOTE_ALL)
+        for task in todos:
+            writer.writerow([
+                user_id,
+                username,
+                task.get("completed"),
+                task.get("title"),
+            ])
 
 
 if __name__ == "__main__":
